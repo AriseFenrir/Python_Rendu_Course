@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from models import Server, ServerIn, ServerOut
 from health import HealthChecker
 
@@ -12,12 +12,17 @@ _counter = 0
 checker = HealthChecker()
 
 
+def require_api_key(x_api_key: str = Header(...)):
+    if x_api_key != "ops-secret":
+        raise HTTPException(403, "Invalid API key")
+
+
 @app.get("/health", tags=["System"])
 async def health_check():
     return {"status": "ok", "servers_monitored": len(_store)}
 
 
-@app.post("/servers", response_model=ServerOut, status_code=201, tags=["Servers"])
+@app.post("/servers", response_model=ServerOut, status_code=201, tags=["Servers"], dependencies=[Depends(require_api_key)])
 async def register_server(server: ServerIn):
     global _counter
     _counter += 1
@@ -47,7 +52,7 @@ async def get_server(server_id: int):
     return _store[server_id]
 
 
-@app.delete("/servers/{server_id}", status_code=204, tags=["Servers"])
+@app.delete("/servers/{server_id}", status_code=204, tags=["Servers"], dependencies=[Depends(require_api_key)])
 async def delete_server(server_id: int):
     if server_id not in _store:
         raise HTTPException(status_code=404, detail="Server not found")
