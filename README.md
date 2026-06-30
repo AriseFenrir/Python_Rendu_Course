@@ -38,3 +38,24 @@ Once the server is running, open the interactive docs at `http://localhost:8000/
 4. **`GET /servers?status=UP`** — Filter servers by status
 5. **`DELETE /servers/2`** — Remove server
 
+### API Key Authentication
+
+The `POST /servers` and `DELETE /servers/{id}` endpoints are protected by an API key.
+You must include the header `x-api-key` with the value `ops-secret` in your request.
+
+Without the key, you will get a `403 Forbidden` response.
+
+```bash
+# Register a server (with API key)
+curl -X POST http://localhost:8000/servers \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: ops-secret" \
+  -d '{"name": "api-prod-1", "host": "httpbin.org", "port": 443}'
+
+# Delete a server (with API key)
+curl -X DELETE http://localhost:8000/servers/1 \
+  -H "x-api-key: ops-secret"
+```
+
+In the Swagger UI (`/docs`), when testing a protected endpoint, fill in the `x-api-key` field with `ops-secret` before sending the request.
+
